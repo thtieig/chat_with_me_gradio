@@ -78,8 +78,13 @@ generic_settings: "Always provide accurate information. If unsure, acknowledge u
 # UI Configuration
 ui:
   title: "AI Chatbot"
-  title_color: "linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red)"
   welcome_message: "Welcome to the Multi-Provider AI Chatbot! Select your provider, model, and persona to get started."
+  title_css: |
+    .css-title {
+        text-align: center;
+        font-size: 6rem;
+        color: blue;
+    }
 
 # File handling configuration
 file_handling:

@@ -23,7 +23,7 @@ file_handler = FileHandler()
 # Get UI configuration
 ui_config = llm_manager.config.get("ui", {})
 title = ui_config.get("title", "AI Chatbot")
-title_color = ui_config.get("title_color", "blue")
+title_css = ui_config.get("title_css", ".title-container { text-align: center; font-size: 5rem; }")
 welcome_message = ui_config.get("welcome_message", "Welcome to the Multi-Provider AI Chatbot!")
 
 # Get providers, models, and personas
@@ -34,12 +34,40 @@ default_model_id = default_models[0]["id"] if default_models else None
 personas = llm_manager.get_personas()
 default_persona_id = personas[0]["id"] if personas else None
 
+# File handling variables
+file_handling_config = llm_manager.config.get("file_handling", {})
+file_handler = FileHandler(config=file_handling_config)
+
 # Current chat variables
 current_chat_id = None
 current_provider_id = default_provider_id
 current_model_id = default_model_id
 current_persona_id = default_persona_id
 uploaded_files = []
+
+# Chat History Management
+def list_chat_options():
+    chats = chat_history.list_chats()
+    return [(f"{c['timestamp']} - {c['provider']}/{c['model']} ({c['persona']})", c["chat_id"]) for c in chats]
+
+def load_selected_chat(chat_id: str):
+    global current_chat_id
+    current_chat_id = chat_id
+    chat_data = chat_history.load_chat(chat_id)
+    if not chat_data:
+        return [], "Failed to load chat."
+    history = []
+    msgs = chat_data.get("messages", [])
+    for i in range(0, len(msgs), 2):
+        user_msg = msgs[i]["content"] if i < len(msgs) else ""
+        bot_msg = msgs[i + 1]["content"] if i + 1 < len(msgs) else None
+        history.append([user_msg, bot_msg])
+    return history, f"Loaded chat from {chat_data.get('timestamp')}"
+
+def delete_selected_chat(chat_id: str):
+    success = chat_history.delete_chat(chat_id)
+    return gr.update(choices=list_chat_options(), value=None), f"{'Deleted' if success else 'Failed to delete'} chat {chat_id}"
+
 
 def update_models(provider_id: str) -> Dict[str, List[Dict[str, str]]]:
     """Update the models dropdown based on selected provider.
@@ -235,161 +263,84 @@ def bot(history):
     return history
 
 def create_chatbot_ui():
-    """Create the Gradio UI for the chatbot.
-    
-    Returns:
-        Gradio Interface
-    """
-    with gr.Blocks(css="""
-    .rainbow-title { 
-        background: linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: bold;
-        font-size: 2.5rem;
-        text-align: center;
-        padding: 0.5rem;
-    }
-    """) as demo:
-        gr.HTML(f"<h1 class='rainbow-title'>{title}</h1>")
+    with gr.Blocks(css=title_css) as demo:
+        gr.HTML(f"<div class='title-container'><span>{title}</span></div>")
         
         with gr.Row():
             with gr.Column(scale=1):
-                # Controls Section
                 with gr.Group():
                     provider_dropdown = gr.Dropdown(
                         choices=[(p["name"], p["id"]) for p in providers],
                         value=default_provider_id,
-                        label="Provider",
-                        info="Select AI provider"
+                        label="Provider"
                     )
-                    
                     model_dropdown = gr.Dropdown(
                         choices=[(m["name"], m["id"]) for m in default_models] if default_models else [],
                         value=default_model_id,
-                        label="Model",
-                        info="Select model"
+                        label="Model"
                     )
-                    
                     persona_dropdown = gr.Dropdown(
                         choices=[(p["name"], p["id"]) for p in personas],
                         value=default_persona_id,
-                        label="Persona",
-                        info="Select chatbot persona"
+                        label="Persona"
                     )
-                
-                # File Upload Section
+
+                with gr.Group():
+                    gr.Markdown("### Chat History")
+                    chat_selector = gr.Dropdown(label="Select a chat", choices=list_chat_options())
+                    load_chat_btn = gr.Button("Load Selected Chat")
+                    delete_chat_btn = gr.Button("Delete Selected Chat")
+                    chat_status = gr.Textbox(label="Chat Status", interactive=False)
+
                 with gr.Group():
                     gr.Markdown("### File Attachments")
-                    file_upload = gr.Files(
-                        label="Upload Files",
-                        file_count="multiple"
-                    )
-                    
-                    folder_input = gr.Textbox(
-                        label="Folder Path",
-                        placeholder="Enter folder path to process"
-                    )
-                    
+                    file_upload = gr.Files(label="Upload Files", file_count="multiple")
+                    folder_input = gr.Textbox(label="Folder Path")
                     upload_folder_btn = gr.Button("Process Folder")
-                    
-                    file_status = gr.Textbox(
-                        label="File Status",
-                        placeholder="No files uploaded",
-                        lines=5,
-                        interactive=False
-                    )
-                    
+                    file_status = gr.Textbox(label="File Status", lines=5, interactive=False)
                     clear_files_btn = gr.Button("Clear Files")
-            
+
             with gr.Column(scale=2):
-                # Chat Interface
-                chatbot = gr.Chatbot(
-                    [],
-                    elem_id="chatbot",
-                    height=600,
-                    avatar_images=(None, "🤖")
-                )
-                
-                msg = gr.Textbox(
-                    placeholder="Type your message here...",
-                    label="Message",
-                    lines=2
-                )
-                
+                chatbot = gr.Chatbot([], elem_id="chatbot", height=600, avatar_images=(None, "🤖"))
+                msg = gr.Textbox(placeholder="Type your message here...", label="Message", lines=2)
                 with gr.Row():
                     submit_btn = gr.Button("Send")
                     clear_btn = gr.Button("Clear Chat")
-        
-        # Set up event handlers
-        provider_dropdown.change(
-            fn=update_models,
-            inputs=provider_dropdown,
-            outputs=model_dropdown
-        )
-        
-        model_dropdown.change(
-            fn=update_model_selection,
-            inputs=model_dropdown
-        )
-        
-        persona_dropdown.change(
-            fn=update_persona_selection,
-            inputs=persona_dropdown
-        )
-        
-        file_upload.upload(
-            fn=handle_file_upload,
-            inputs=file_upload,
-            outputs=file_status
-        )
-        
-        upload_folder_btn.click(
-            fn=handle_folder_upload,
-            inputs=folder_input,
-            outputs=file_status
-        )
-        
-        clear_files_btn.click(
-            fn=clear_files,
-            outputs=file_status
-        )
-        
-        msg.submit(
-            fn=user,
-            inputs=[msg, chatbot],
-            outputs=[msg, chatbot],
-            queue=False
+
+        provider_dropdown.change(fn=update_models, inputs=provider_dropdown, outputs=model_dropdown)
+        model_dropdown.change(fn=update_model_selection, inputs=model_dropdown)
+        persona_dropdown.change(fn=update_persona_selection, inputs=persona_dropdown)
+        file_upload.upload(fn=handle_file_upload, inputs=file_upload, outputs=file_status)
+        upload_folder_btn.click(fn=handle_folder_upload, inputs=folder_input, outputs=file_status)
+        clear_files_btn.click(fn=clear_files, outputs=file_status)
+        msg.submit(fn=user, inputs=[msg, chatbot], outputs=[msg, chatbot], queue=False).then(fn=bot, inputs=chatbot, outputs=chatbot)
+        submit_btn.click(fn=user, inputs=[msg, chatbot], outputs=[msg, chatbot], queue=False).then(fn=bot, inputs=chatbot, outputs=chatbot)
+        clear_btn.click(lambda: None, None, chatbot, queue=False)
+
+        # new history actions
+        load_chat_btn.click(
+            fn=load_selected_chat, 
+            inputs=chat_selector, 
+            outputs=[chatbot, chat_status]
         ).then(
-            fn=bot,
-            inputs=chatbot,
-            outputs=chatbot
+            fn=lambda: gr.update(choices=list_chat_options()), 
+            inputs=None, 
+            outputs=chat_selector
         )
-        
-        submit_btn.click(
-            fn=user,
-            inputs=[msg, chatbot],
-            outputs=[msg, chatbot],
-            queue=False
+        delete_chat_btn.click(
+            fn=delete_selected_chat, 
+            inputs=chat_selector, 
+            outputs=[chat_selector, chat_status]
         ).then(
-            fn=bot,
-            inputs=chatbot,
-            outputs=chatbot
+            fn=lambda: gr.update(choices=list_chat_options(), value=None), 
+            inputs=None, 
+            outputs=chat_selector
         )
-        
-        clear_btn.click(
-            lambda: None,
-            None,
-            chatbot,
-            queue=False
-        )
-        
-        # Show welcome message
+
         gr.Markdown(f"### {welcome_message}")
     
     return demo
 
-# Launch the application
 if __name__ == "__main__":
     demo = create_chatbot_ui()
     demo.launch()
