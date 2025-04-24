@@ -80,10 +80,14 @@ ui:
   title: "AI Chatbot"
   welcome_message: "Welcome to the Multi-Provider AI Chatbot! Select your provider, model, and persona to get started."
   title_css: |
-    .css-title {
-        text-align: center;
-        font-size: 6rem;
-        color: blue;
+    .title-container {
+      text-align: center;
+      color: white;
+    }
+
+    .title-container span {
+      font-size: 3rem;
+      color: red;
     }
 
 # File handling configuration

@@ -10,7 +10,7 @@ A feature-rich Gradio-based chatbot application that supports multiple LLM provi
 - **File Upload**: Attach files to provide context for your questions
 - **Folder Processing**: Load entire directories of files
 - **Chat History**: Persistent conversations
-- **Clean, Modern UI**: Rainbow-themed interface
+- **Clean, Modern UI**: Customizable interface
 
 ## Installation
 
@@ -75,7 +75,33 @@ A feature-rich Gradio-based chatbot application that supports multiple LLM provi
 
 ## Customization
 
-In the `config` folder, create a copy of the `config.yaml.example` template to create your own `config.yaml` 
+In the `config` folder, create a copy of the `config.yaml.example` template to create your own `config.yaml`.   
+The `config.yaml` file contains several configuration options, including:
+
+### UI Configuration
+
+The ui section in `config.yaml` allows you to customize the chatbot's UI. For example, you can modify the `title`, `welcome_message`, and t`itle_css` to give your chatbot a personalized touch. Try this CSS for a more colorful experience:
+```css
+title_css: |
+  .title-container {
+    text-align: center;
+    margin: 0;
+    padding: 0.1em;
+    height: 6rem; 
+    line-height: 6rem; 
+    color: white; 
+  }
+
+  .title-container span {
+    font-size: 3rem; /* size that fits the container */
+    padding: 0.1em;
+    background: linear-gradient(to right, #ff0000, #ffa500, #ffff00, #008000, #0000ff, #4b0082, #ee82ee, #ff69b4, #ff00ff, #800080);
+    color: transparent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+```
+This will give your title a rainbow-colored gradient effect.  
 
 ### Adding New Providers
 
@@ -87,9 +113,17 @@ In the `config` folder, create a copy of the `config.yaml.example` template to c
 
 Add new persona entries to the `personas` list in `config.yaml`.
 
-### Modifying the UI
+### File Handling Configuration
 
-The UI components are defined in the `create_chatbot_ui()` function in `app.py`.
+The file_handling section in `config.yaml` allows you to configure the file upload capabilities. You can modify the `allowed_extensions`, `max_file_size_mb`, and `max_files_per_upload` to suit your needs. For example:
+
+```
+file_handling:
+  allowed_extensions: [".txt", ".py", ".js", ".html", ".css", ".json", ".md", ".csv", ".pdf"]
+  max_file_size_mb: 10
+  max_files_per_upload: 100
+```
+This configuration allows users to upload files with the specified extensions, with a maximum size of 10MB and a maximum of 100 files per upload.
 
 ## License
 
