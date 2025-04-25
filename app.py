@@ -121,7 +121,15 @@ def bot(
 
 # build the UI
 def create_chatbot_ui():
-    with gr.Blocks(css=title_css) as demo:
+    # Build your <head> injection using your variables
+    custom_head = f"""
+    <title>{title}</title>
+    <meta property="og:title" content="{title}" />
+    <meta property="og:description" content="{welcome_message}" />
+    """
+
+    # Now include title= and head= here
+    with gr.Blocks(css=title_css, title=title, head=custom_head) as demo:
         # states
         chat_id_state  = gr.State(None)
         provider_state = gr.State(default_pid)
@@ -129,6 +137,7 @@ def create_chatbot_ui():
         persona_state  = gr.State(default_persona)
         files_state    = gr.State([])
 
+        # Visible page title
         gr.HTML(f"<div class='title-container'><span>{title}</span></div>")
 
         with gr.Row():
@@ -136,32 +145,32 @@ def create_chatbot_ui():
                 # pickers
                 with gr.Group():
                     provider_dropdown = gr.Dropdown(
-                        choices=[(p["name"],p["id"]) for p in providers],
+                        choices=[(p["name"], p["id"]) for p in providers],
                         value=default_pid, label="Provider"
                     )
                     model_dropdown = gr.Dropdown(
-                        choices=[(m["name"],m["id"]) for m in default_models],
+                        choices=[(m["name"], m["id"]) for m in default_models],
                         value=default_mid, label="Model"
                     )
                     persona_dropdown = gr.Dropdown(
-                        choices=[(p["name"],p["id"]) for p in personas],
+                        choices=[(p["name"], p["id"]) for p in personas],
                         value=default_persona, label="Persona"
                     )
 
                 # history
                 with gr.Group():
                     gr.Markdown("### Chat History")
-                    chat_selector = gr.Dropdown(label="Select a chat", choices=list_chat_options())
-                    load_chat_btn = gr.Button("Load Selected Chat")
+                    chat_selector   = gr.Dropdown(label="Select a chat", choices=list_chat_options())
+                    load_chat_btn   = gr.Button("Load Selected Chat")
                     delete_chat_btn = gr.Button("Delete Selected Chat")
-                    chat_status   = gr.Textbox(label="Status", interactive=False)
+                    chat_status     = gr.Textbox(label="Status", interactive=False)
 
                 # files
                 with gr.Group():
                     gr.Markdown("### File Attachments")
-                    upload_btn = gr.UploadButton("Upload Files", file_count="multiple")
-                    file_status= gr.Textbox(label="File Status", lines=5, interactive=False)
-                    clear_btn  = gr.Button("Clear Files")
+                    upload_btn  = gr.UploadButton("Upload Files", file_count="multiple")
+                    file_status = gr.Textbox(label="File Status", lines=5, interactive=False)
+                    clear_btn   = gr.Button("Clear Files")
 
                 # wire file events
                 upload_btn.upload(fn=handle_file_upload, inputs=[upload_btn, files_state],
@@ -207,10 +216,12 @@ def create_chatbot_ui():
                          .then(fn=lambda: gr.update(choices=list_chat_options(), value=None),
                                inputs=None, outputs=chat_selector)
 
+        # welcome message at the bottom
         gr.Markdown(f"### {welcome_message}")
 
     return demo
 
+
 if __name__=="__main__":
     demo = create_chatbot_ui()
-    demo.launch(favicon_path='config/img/favicon.ico')
+    demo.launch(favicon_path='config/img/favicon.ico', pwa=True)
