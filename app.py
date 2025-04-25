@@ -114,6 +114,8 @@ def handle_file_upload(files):
         Message about the uploaded files
     """
     global uploaded_files
+    
+    # Reset the uploaded files list based on what's actually in the UI
     uploaded_files = []
     
     if not files:
@@ -121,15 +123,11 @@ def handle_file_upload(files):
         
     file_messages = []
     for file in files:
-        # Debug information to help troubleshoot
-        print(f"File type: {type(file)}, Attributes: {dir(file) if hasattr(file, '__dir__') else 'No attributes'}")
-        
         file_info = file_handler.process_file(file)
         
         if "error" in file_info:
-            # Get filename safely from file_info if available, otherwise try to get it from the file object
             filename = file_info.get("filename", 
-                       getattr(file, "name", str(file)) if hasattr(file, "name") else str(file))
+                      getattr(file, "name", str(file)) if hasattr(file, "name") else str(file))
             file_messages.append(f"Error with {filename}: {file_info['error']}")
         else:
             uploaded_files.append(file_info)
@@ -138,15 +136,50 @@ def handle_file_upload(files):
     
     return "\n".join(file_messages)
 
+def update_file_list(files):
+    """Update the list of uploaded files when a file is removed.
+    
+    Args:
+        files: Current files in the Gradio component
+        
+    Returns:
+        Message about the current files
+    """
+    global uploaded_files
+    
+    # Save the previous list to compare
+    previous_files = set(f["filename"] for f in uploaded_files)
+    
+    # Reset uploaded files
+    uploaded_files = []
+    
+    if not files:
+        return "All files have been removed."
+    
+    # Process the remaining files
+    for file in files:
+        file_info = file_handler.process_file(file)
+        if "error" not in file_info:
+            uploaded_files.append(file_info)
+    
+    # Find removed files
+    current_files = set(f["filename"] for f in uploaded_files)
+    removed = previous_files - current_files
+    
+    if removed:
+        return f"Removed: {', '.join(removed)}. {len(uploaded_files)} file(s) remaining."
+    else:
+        return f"{len(uploaded_files)} file(s) currently attached."
+
 def clear_files():
     """Clear uploaded files.
     
     Returns:
-        Confirmation message
+        Confirmation message and empty files component
     """
     global uploaded_files
     uploaded_files = []
-    return "All uploaded files cleared."
+    return "All uploaded files cleared.", None
 
 def user(message, history):
     """Add user message to history.
@@ -245,7 +278,7 @@ def create_chatbot_ui():
                     gr.Markdown("### File Attachments")
                     file_upload = gr.Files(label="Upload Files", file_count="multiple")
                     file_status = gr.Textbox(label="File Status", lines=5, interactive=False)
-                    clear_files_btn = gr.Button("Clear Files")
+                    clear_files_btn = gr.Button("Clear All Files")
 
             with gr.Column(scale=2):
                 chatbot = gr.Chatbot([], elem_id="chatbot", height=600, avatar_images=(None, "🤖"))
@@ -257,11 +290,14 @@ def create_chatbot_ui():
         provider_dropdown.change(fn=update_models, inputs=provider_dropdown, outputs=model_dropdown)
         model_dropdown.change(fn=update_model_selection, inputs=model_dropdown)
         persona_dropdown.change(fn=update_persona_selection, inputs=persona_dropdown)
-        file_upload.upload(fn=handle_file_upload, inputs=file_upload, outputs=file_status)
         clear_files_btn.click(fn=clear_files, outputs=file_status)
         msg.submit(fn=user, inputs=[msg, chatbot], outputs=[msg, chatbot], queue=False).then(fn=bot, inputs=chatbot, outputs=chatbot)
         submit_btn.click(fn=user, inputs=[msg, chatbot], outputs=[msg, chatbot], queue=False).then(fn=bot, inputs=chatbot, outputs=chatbot)
         clear_btn.click(lambda: None, None, chatbot, queue=False)
+        # File handling events
+        file_upload.upload(fn=handle_file_upload, inputs=file_upload, outputs=file_status)
+        file_upload.change(fn=update_file_list, inputs=file_upload, outputs=file_status)
+        clear_files_btn.click(fn=clear_files, inputs=None, outputs=[file_status, file_upload])
 
         # new history actions
         load_chat_btn.click(
