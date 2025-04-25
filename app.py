@@ -138,56 +138,37 @@ def handle_file_upload(files):
     
     return "\n".join(file_messages)
 
-def handle_folder_upload(folder_path):
+def handle_folder_upload(folder_files):
     """Process uploaded folders.
     
     Args:
-        folder_path: Path to the folder uploaded through Gradio
+        folder_files: List of files uploaded through Gradio
         
     Returns:
         Message about the processed folder
     """
     global uploaded_files
     
-    if not folder_path:
+    if not folder_files:
         return "No folder specified."
         
-    # Debug information
-    print(f"Processing folder: {folder_path}")
-    
-    files = file_handler.process_folder(folder_path)
-    
-    if not files:
-        return "No files found in the folder."
-        
-    file_messages = []
-    text_files = []
-    skipped_count = 0
-    error_count = 0
-    
-    for file_info in files:
+    # Process each file in the uploaded folder
+    files = []
+    for file in folder_files:
+        file_info = file_handler.process_file(file)
         if "error" in file_info:
-            file_messages.append(f"Error: {file_info['error']}")
-            error_count += 1
-        elif "warning" in file_info:
-            file_messages.append(f"Warning: {file_info['warning']}")
-            skipped_count += 1
-        elif "info" in file_info:
-            file_messages.append(f"Info: {file_info['info']}")
+            return f"Error processing file: {file_info['error']}"
         else:
-            text_files.append(file_info)
-            file_type = "text" if file_info.get("is_text") else "binary"
-            file_messages.append(f"Processed {file_info['relative_path']} ({file_type}, {file_info['size']/1024:.1f} KB)")
+            files.append(file_info)
     
-    uploaded_files.extend(text_files)
+    uploaded_files.extend(files)
     
-    summary = f"Processed {len(text_files)} files from folder {folder_path}"
-    if skipped_count > 0:
-        summary += f", skipped {skipped_count} files"
-    if error_count > 0:
-        summary += f", encountered {error_count} errors"
+    file_messages = []
+    for file in files:
+        file_type = "text" if file.get("is_text") else "binary"
+        file_messages.append(f"Processed {file['filename']} ({file_type}, {file['size']/1024:.1f} KB)")
     
-    return summary + ":\n" + "\n".join(file_messages)
+    return "\n".join(file_messages)
 
 def clear_files():
     """Clear uploaded files.
@@ -295,8 +276,7 @@ def create_chatbot_ui():
                 with gr.Group():
                     gr.Markdown("### File Attachments")
                     file_upload = gr.Files(label="Upload Files", file_count="multiple")
-                    folder_input = gr.Textbox(label="Folder Path")
-                    upload_folder_btn = gr.Button("Process Folder")
+                    folder_upload = gr.Files(label="Upload Folder", file_count="directory")
                     file_status = gr.Textbox(label="File Status", lines=5, interactive=False)
                     clear_files_btn = gr.Button("Clear Files")
 
@@ -311,7 +291,7 @@ def create_chatbot_ui():
         model_dropdown.change(fn=update_model_selection, inputs=model_dropdown)
         persona_dropdown.change(fn=update_persona_selection, inputs=persona_dropdown)
         file_upload.upload(fn=handle_file_upload, inputs=file_upload, outputs=file_status)
-        upload_folder_btn.click(fn=handle_folder_upload, inputs=folder_input, outputs=file_status)
+        folder_upload.upload(fn=handle_folder_upload, inputs=folder_upload, outputs=file_status)
         clear_files_btn.click(fn=clear_files, outputs=file_status)
         msg.submit(fn=user, inputs=[msg, chatbot], outputs=[msg, chatbot], queue=False).then(fn=bot, inputs=chatbot, outputs=chatbot)
         submit_btn.click(fn=user, inputs=[msg, chatbot], outputs=[msg, chatbot], queue=False).then(fn=bot, inputs=chatbot, outputs=chatbot)
