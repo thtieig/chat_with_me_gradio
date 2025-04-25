@@ -1,4 +1,5 @@
 import os
+import requests
 from typing import List, Dict, Any, Optional, Tuple
 import google.generativeai as genai
 
