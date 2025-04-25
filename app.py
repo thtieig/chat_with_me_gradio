@@ -47,13 +47,11 @@ def load_selected_chat(chat_id: str, chat_id_state: str):
     chat_data = chat_history.load_chat(chat_id)
     if not chat_data:
         return [], "Failed to load chat.", chat_id_state
-    history = []
+    
+    # Return the messages directly since they're already in the right format
     msgs = chat_data.get("messages", [])
-    for i in range(0, len(msgs), 2):
-        user_msg = msgs[i]["content"] if i < len(msgs) else ""
-        bot_msg = msgs[i + 1]["content"] if i + 1 < len(msgs) else None
-        history.append([user_msg, bot_msg])
-    return history, f"Loaded chat from {chat_data.get('timestamp')}", chat_id
+    
+    return msgs, f"Loaded chat from {chat_data.get('timestamp')}", chat_id
 
 def delete_selected_chat(chat_id: str):
     success = chat_history.delete_chat(chat_id)
@@ -129,16 +127,12 @@ def clear_files(files_state):
 
 def user(message, history):
     """Add user message to history."""
-    return "", history + [[message, None]]
+    return "", history + [{"role": "user", "content": message}]
 
 def bot(history, provider_state, model_state, persona_state, files_state, chat_id_state):
     """Generate bot response."""
-    # Format messages for the LLM
-    messages = []
-    for human_msg, ai_msg in history:
-        messages.append({"role": "user", "content": human_msg})
-        if ai_msg is not None:
-            messages.append({"role": "assistant", "content": ai_msg})
+    # Format messages for the LLM - history is already in the correct format now
+    messages = history.copy()
     
     # Generate response
     response_text, metadata = llm_manager.chat_completion(
@@ -149,8 +143,8 @@ def bot(history, provider_state, model_state, persona_state, files_state, chat_i
         files=files_state
     )
     
-    # Update history
-    history[-1][1] = response_text
+    # Add assistant response to history
+    history.append({"role": "assistant", "content": response_text})
     
     # Save chat history
     current_chat_id = chat_id_state
@@ -215,7 +209,7 @@ def create_chatbot_ui():
                     clear_files_btn = gr.Button("Clear Files")
 
             with gr.Column(scale=2):
-                chatbot = gr.Chatbot([], elem_id="chatbot", height=600, avatar_images=(None, "🤖"))
+                chatbot = gr.Chatbot([], elem_id="chatbot", height=600, avatar_images=(None, "🤖"), type="messages")
                 msg = gr.Textbox(placeholder="Type your message here...", label="Message", lines=2)
                 with gr.Row():
                     submit_btn = gr.Button("Send")
