@@ -117,7 +117,7 @@ You can also costumize the chat, setting avatars for human and chatbot, saving t
     human_avatar_img: "./config/img/human-avatar.png"
     chatbot_height: 800
     ```
-
+You will find some text placeholders in the `img` folder as references.  
 
 ### Adding New Providers
 
