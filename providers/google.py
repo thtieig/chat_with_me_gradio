@@ -89,5 +89,5 @@ def chat(
             "model": model_id,
             "finish_reason": "stop"  # Google doesn't provide this info directly
         }
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         return f"Error: {str(e)}", {"error": str(e)}

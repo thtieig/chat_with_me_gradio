@@ -88,5 +88,5 @@ def chat(
             },
             "finish_reason": response.stop_reason
         }
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         return f"Error: {str(e)}", {"error": str(e)}

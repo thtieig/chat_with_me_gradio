@@ -106,5 +106,5 @@ def chat(
                 pass
             
             return error_msg, {"error": error_msg}
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         return f"Error: {str(e)}", {"error": str(e)}
