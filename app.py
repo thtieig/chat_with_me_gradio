@@ -206,8 +206,8 @@ def bot(history):
         persona=persona_name
     )
     
-    # Clear any uploaded files after they've been used
-    uploaded_files = []
+    # Do not clear the uploaded_files list here
+    # uploaded_files = []
     
     return history
 
