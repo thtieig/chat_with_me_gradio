@@ -20,6 +20,9 @@ ui = llm_manager.config.get("ui", {})
 title           = ui.get("title", "AI Chatbot")
 title_css       = ui.get("title_css", ".title-container { text-align: center; font-size: 5rem; }")
 welcome_message = ui.get("welcome_message", "Welcome to the Multi-Provider AI Chatbot!")
+chatbot_height = ui.get("chatbot_height", 600)
+bot_avatar_img = ui.get("bot_avatar_img", "None")
+human_avatar_img = ui.get("human_avatar_img", "None")
 
 # initial pick-lists
 providers       = llm_manager.get_providers()
@@ -168,8 +171,11 @@ def create_chatbot_ui():
 
             # chat panel
             with gr.Column(scale=2):
-                chatbot = gr.Chatbot([], elem_id="chatbot", height=600,
-                                      avatar_images=(None,"🤖"), type="messages")
+                chatbot = gr.Chatbot([],
+                                     elem_id="chatbot", 
+                                     height=chatbot_height, 
+                                     avatar_images=(human_avatar_img, bot_avatar_img), 
+                                     type="messages")
                 msg = gr.Textbox(placeholder="Type your message here...", label="Message", lines=2)
                 with gr.Row():
                     send_btn = gr.Button("Send")
@@ -207,4 +213,4 @@ def create_chatbot_ui():
 
 if __name__=="__main__":
     demo = create_chatbot_ui()
-    demo.launch()
+    demo.launch(favicon_path='config/img/favicon.ico')

@@ -56,3 +56,5 @@ tmp*
 test*
 venv
 chat_histories
+*.ico
+*.png
