@@ -138,38 +138,6 @@ def handle_file_upload(files):
     
     return "\n".join(file_messages)
 
-def handle_folder_upload(folder_files):
-    """Process uploaded folders.
-    
-    Args:
-        folder_files: List of files uploaded through Gradio
-        
-    Returns:
-        Message about the processed folder
-    """
-    global uploaded_files
-    
-    if not folder_files:
-        return "No folder specified."
-        
-    # Process each file in the uploaded folder
-    files = []
-    for file in folder_files:
-        file_info = file_handler.process_file(file)
-        if "error" in file_info:
-            return f"Error processing file: {file_info['error']}"
-        else:
-            files.append(file_info)
-    
-    uploaded_files.extend(files)
-    
-    file_messages = []
-    for file in files:
-        file_type = "text" if file.get("is_text") else "binary"
-        file_messages.append(f"Processed {file['filename']} ({file_type}, {file['size']/1024:.1f} KB)")
-    
-    return "\n".join(file_messages)
-
 def clear_files():
     """Clear uploaded files.
     
@@ -276,7 +244,6 @@ def create_chatbot_ui():
                 with gr.Group():
                     gr.Markdown("### File Attachments")
                     file_upload = gr.Files(label="Upload Files", file_count="multiple")
-                    folder_upload = gr.Files(label="Upload Folder", file_count="directory")
                     file_status = gr.Textbox(label="File Status", lines=5, interactive=False)
                     clear_files_btn = gr.Button("Clear Files")
 
@@ -291,7 +258,6 @@ def create_chatbot_ui():
         model_dropdown.change(fn=update_model_selection, inputs=model_dropdown)
         persona_dropdown.change(fn=update_persona_selection, inputs=persona_dropdown)
         file_upload.upload(fn=handle_file_upload, inputs=file_upload, outputs=file_status)
-        folder_upload.upload(fn=handle_folder_upload, inputs=folder_upload, outputs=file_status)
         clear_files_btn.click(fn=clear_files, outputs=file_status)
         msg.submit(fn=user, inputs=[msg, chatbot], outputs=[msg, chatbot], queue=False).then(fn=bot, inputs=chatbot, outputs=chatbot)
         submit_btn.click(fn=user, inputs=[msg, chatbot], outputs=[msg, chatbot], queue=False).then(fn=bot, inputs=chatbot, outputs=chatbot)
