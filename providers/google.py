@@ -1,4 +1,5 @@
 import os
+import requests
 from typing import List, Dict, Any, Optional, Tuple
 import google.generativeai as genai
 
@@ -89,5 +90,5 @@ def chat(
             "model": model_id,
             "finish_reason": "stop"  # Google doesn't provide this info directly
         }
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         return f"Error: {str(e)}", {"error": str(e)}

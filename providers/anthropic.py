@@ -1,4 +1,5 @@
 import os
+import requests
 import json
 from typing import List, Dict, Any, Optional, Tuple
 import anthropic
@@ -88,5 +89,5 @@ def chat(
             },
             "finish_reason": response.stop_reason
         }
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         return f"Error: {str(e)}", {"error": str(e)}

@@ -79,6 +79,9 @@ generic_settings: "Always provide accurate information. If unsure, acknowledge u
 ui:
   title: "AI Chatbot"
   welcome_message: "Welcome to the Multi-Provider AI Chatbot! Select your provider, model, and persona to get started."
+  bot_avatar_img: "./config/img/bot-avatar.png"
+  human_avatar_img: "./config/img/human-avatar.png"
+  chatbot_height: 600
   title_css: |
     .title-container {
       text-align: center;

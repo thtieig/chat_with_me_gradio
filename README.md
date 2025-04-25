@@ -89,27 +89,35 @@ The `config.yaml` file contains several configuration options, including:
 ### UI Configuration
 
 The ui section in `config.yaml` allows you to customize the chatbot's UI. For example, you can modify the `title`, `welcome_message`, and t`itle_css` to give your chatbot a personalized touch. Try this CSS for a more colorful experience:
-```css
-title_css: |
-  .title-container {
-    text-align: center;
-    margin: 0;
-    padding: 0.1em;
-    height: 6rem; 
-    line-height: 6rem; 
-    color: white; 
-  }
+    ```css
+    title_css: |
+    .title-container {
+        text-align: center;
+        margin: 0;
+        padding: 0.1em;
+        height: 6rem; 
+        line-height: 6rem; 
+        color: white; 
+    }
 
-  .title-container span {
-    font-size: 3rem; /* size that fits the container */
-    padding: 0.1em;
-    background: linear-gradient(to right, #ff0000, #ffa500, #ffff00, #008000, #0000ff, #4b0082, #ee82ee, #ff69b4, #ff00ff, #800080);
-    color: transparent;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-```
+    .title-container span {
+        font-size: 3rem; /* size that fits the container */
+        padding: 0.1em;
+        background: linear-gradient(to right, #ff0000, #ffa500, #ffff00, #008000, #0000ff, #4b0082, #ee82ee, #ff69b4, #ff00ff, #800080);
+        color: transparent;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    ```
 This will give your title a rainbow-colored gradient effect.  
+
+You can also costumize the chat, setting avatars for human and chatbot, saving them into `config/img` folder and setting the relative paths (relative to `app.py`), and the size of the chatbot window too:
+    ```
+    bot_avatar_img: "./config/img/bot-avatar.png"
+    human_avatar_img: "./config/img/human-avatar.png"
+    chatbot_height: 800
+    ```
+You will find some text placeholders in the `img` folder as references.  
 
 ### Adding New Providers
 
