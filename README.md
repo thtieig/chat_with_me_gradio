@@ -38,6 +38,14 @@ A feature-rich Gradio-based chatbot application that supports multiple LLM provi
    IONOS_API_KEY=your_ionos_api_key
    OLLAMA_API_BASE=http://localhost:11434
    ```
+     
+   NOTE. This app is based on [Gradio](https://www.gradio.app/). You can also set [environment variables for Gradio](https://www.gradio.app/guides/environment-variables) in this file.  
+   For example, if you want to run your app on port `5001` and serve it from `https:\\mydomain.com/v2`, you can add the following:
+   ```
+   GRADIO_SERVER_PORT=5001
+   GRADIO_SERVER_NAME="https:\\mydomain.com"
+   GRADIO_ROOT_PATH="/v2"
+   ```
 
 ## Usage
 
@@ -127,4 +135,4 @@ This configuration allows users to upload files with the specified extensions, w
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
